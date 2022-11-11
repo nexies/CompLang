@@ -6,6 +6,7 @@ using namespace std;
 int main()
 {
 
+    cout << "Hello World!" << endl;
     char a = 0;
     char * pa = &a; // Игнорировать ворнинг?
     BitPtr bp(pa, 0);
