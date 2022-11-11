@@ -2,9 +2,12 @@
 #define T_BIT_TYPES_H
 #include <iostream>
 
+//Note 11.11.22: Закрыл глаза на возможные проблемы с выделением памяти
+
+
 typedef char* cell;
 
-class BitPtr  // Хорошо бы уметь считывать или записывать что-то в этот бит !
+class BitPtr
 {
 public:
     BitPtr(){}
@@ -24,43 +27,52 @@ public:
 };
 
 
-class BitSeq   //Хорошо бы выделять под это дело память ! или нет?
+class BitSeq
 {
 public:
     BitSeq(){}
-    BitSeq(uint64_t data, int size)
+    /*BitSeq(uint64_t data, int size)
     {
-        this->start.byte = new char[size/8 + 1];
-        this->start.bit = 0;
+        this->start = new char[size/8 + 1]; //динамически выделяется, значит должна удаляться
         this->size = size;
         write(data);
-    }
+    }*/
+
     BitSeq(BitPtr p_start, int p_size) : start(p_start), size(p_size){}
     ~BitSeq(){} // Как чистить память?
 public:
     BitPtr start;
     int size;
 public:
-    void write(uint64_t bits);
+    void fill(uint64_t bits);
 };
 
 std::ostream & operator << (std::ostream & stream, BitSeq seq);
 
+// Выделятся 1024 байт памяти. В случае переполнения выделяется в два раза больше. Другого решения пока не придумал
 class BitStr
 {
 public:
-    BitStr(){}
-    ~BitStr(){} // Надо чистить поле. Как?
+    BitStr(){
+        alloc_size = 1024;
+        field.start = new char[alloc_size];
+        point = field.start;
+    }
+    ~BitStr(){
+        delete[] field.start.byte;
+    }
 public:
-    // Нужно выделять память для field? Мы не знаем, какого оно должно быть размера, к тому же оно динамически меняется
     BitSeq field;
     BitPtr point;
+    int size;
 private:
-    BitPtr expand_field(int bytes);  //Возвращает указатель на бит, после которого идет новое поле
+    int alloc_size;
+    void expand_field();
 public:
     void write(BitSeq bseq);
-    BitSeq read(int up_lim);
-    BitSeq read_all;
+    void read_to(BitSeq & seq, int up_lim);
+//    BitSeq read (int up_lim);
+//    BitSeq read_all();
 };
 
 #endif // T_BIT_TYPES_H

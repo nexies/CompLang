@@ -44,7 +44,7 @@ void BitPtr::operator-=(int shift)
 //====================================================================================================
 //BitSeq:
 
-void BitSeq::write(uint64_t bits)
+void BitSeq::fill(uint64_t bits)
 {
     BitPtr point = this->start;
     for(int i = 0; i < 64 && i < this->size; i++){
@@ -66,3 +66,47 @@ std::ostream & operator << (std::ostream & stream, BitSeq seq){
 }
 
 //====================================================================================================
+
+
+//====================================================================================================
+//BitStr:
+
+void BitStr::expand_field()
+{
+    BitSeq n_field(new char[alloc_size * 2], alloc_size * 16);
+    memcpy(n_field.start.byte, field.start.byte, sizeof(char) * alloc_size);
+    delete[] field.start.byte;
+
+    field = n_field;
+    alloc_size *= 2;
+}
+
+void BitStr::write(BitSeq bseq)
+{
+    if(this->size + bseq.size >= alloc_size * 8)
+        expand_field();
+
+    this->size += bseq.size;
+    BitPtr bseq_point = bseq.start + bseq.size - 1;
+    for(int i = 0; i < bseq.size; i++){
+        this->point.w(bseq_point.r());
+        this->point += 1;
+        bseq_point -= 1;
+    }
+}
+
+void BitStr::read_to(BitSeq &seq, int up_lim)
+{
+    if(seq.size > this->size) // В потоке меньше битов, чем поместится в seq
+        up_lim = size;
+
+    size -= up_lim;
+    seq.size = up_lim;
+
+    BitPtr pseq = seq.start;
+    for(int i = 0; i < up_lim; i++){
+        this->point -= 1;
+        pseq.w(point.r());
+        pseq +=1;
+    }
+}

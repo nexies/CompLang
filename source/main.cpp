@@ -5,16 +5,14 @@ using namespace std;
 
 int main()
 {
+    BitSeq bs1(new char, 8);
+    BitSeq bs2(new char, 8);
+    bs1.fill(0b11001010);
 
-    cout << "Hello World!" << endl;
-    char a = 0;
-    char * pa = &a; // Игнорировать ворнинг?
-    BitPtr bp(pa, 0);
-    bp.w(1);
+    BitStr str;
+    str.write(bs1);
 
-    BitSeq bs1(bp, 8);
-    BitSeq bs2(0b110101, 16);
-
+    str.read_to(bs2, 8);
     cout << bs1;
     cout << bs2;
     return 0;
