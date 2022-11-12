@@ -19,46 +19,90 @@ void BitPtr::w(int val) /* Write */
 
 BitPtr BitPtr::operator+(int shift)
 {
-    assert(shift >= 0);
+    if(shift < 0) return this->operator-(-shift);
     return BitPtr((this->byte + (bit + (int&)shift)/8), (this->bit + (int&)shift)%8);
 }
 
 BitPtr BitPtr::operator-(int shift)
 {
-    assert(shift >= 0);
+    if(shift < 0) return this->operator+(-shift);
     return BitPtr(this->byte + (bit - (int&)shift - 7)/8, ((this->bit - (int&)shift)%8 + 8) % 8);
 }
 
-void BitPtr::operator+=(int shift)
-{
-    *this = *this + shift;
-}
-
-void BitPtr::operator-=(int shift)
-{
-    *this = *this - shift;
-}
+void BitPtr::operator+=(int shift) { *this = *this + shift; }
+void BitPtr::operator-=(int shift) { *this = *this - shift; }
+void BitPtr::operator++(int emp)   { *this += 1; }
+void BitPtr::operator--(int emp)   { *this -= 1; }
 //====================================================================================================
 
 
 //====================================================================================================
 //BitSeq:
 
-void BitSeq::fill(uint64_t bits)
+
+void BitSeq::alloc_more(int bytes)
 {
-    BitPtr point = this->start;
-    for(int i = 0; i < 64 && i < this->size; i++){
-        point.w(bits & (1ul << i));
-        point += 1;
+    cell new_start = new char[_allocated + bytes];
+    memcpy(new_start, this->_start, _allocated);
+    delete[] _start;
+    _start = new_start;
+    _allocated += bytes;
+}
+
+void BitSeq::alloc_less(int bytes)
+{
+    if(bytes >= _size){
+        this->_size = 0;
+        this->_allocated = 0;
+        delete[] this->_start;
+        return;
+    }
+    cell new_start = new char[_allocated - bytes];
+    memcpy(new_start, this->_start, bytes);
+    delete[] _start;
+    _start = new_start;
+    _allocated -= bytes;
+}
+
+void BitSeq::append(BitSeq &other)
+{
+    if(other.size() + this->_size > _allocated * 8)
+        this->alloc_more(other.allocated());
+    this->_size += other.size();
+
+    BitPtr ptr_other = other.begin();
+    BitPtr ptr_this  = this->end() + 1;
+
+    for(int i = 0; i < other.size(); i++){
+        ptr_this.w(ptr_other.r());
+        ptr_this++;
+        ptr_other++;
     }
 
 }
 
+BitPtr BitSeq::operator [](int pos)
+{
+    assert(pos < _size);
+    return BitPtr(_start, 0) + pos;
+}
+
+
+//void BitSeq::fill(uint64_t bits)
+//{
+//    BitPtr point = this->start;
+//    for(int i = 0; i < 64 && i < this->size; i++){
+//        point.w(bits & (1ul << i));
+//        point += 1;
+//    }
+
+//}
+
 std::ostream & operator << (std::ostream & stream, BitSeq seq){
-    stream << "byte: " << (uint64_t&)seq.start.byte << ", bit: " << seq.start.bit << ", size: " << seq.size;
+    stream << "size: " << seq.size() << ", alloc_size: " << seq.allocated();
     stream << ", data: ";
-    BitPtr point = seq.start + seq.size - 1;
-    for(int i = 0; i < seq.size; i++){
+    BitPtr point = seq.end();
+    for(int i = 0; i < seq.size(); i++){
         stream << point.r();
         point -= 1;
     }
@@ -70,43 +114,3 @@ std::ostream & operator << (std::ostream & stream, BitSeq seq){
 
 //====================================================================================================
 //BitStr:
-
-void BitStr::expand_field()
-{
-    BitSeq n_field(new char[alloc_size * 2], alloc_size * 16);
-    memcpy(n_field.start.byte, field.start.byte, sizeof(char) * alloc_size);
-    delete[] field.start.byte;
-
-    field = n_field;
-    alloc_size *= 2;
-}
-
-void BitStr::write(BitSeq bseq)
-{
-    if(this->size + bseq.size >= alloc_size * 8)
-        expand_field();
-
-    this->size += bseq.size;
-    BitPtr bseq_point = bseq.start + bseq.size - 1;
-    for(int i = 0; i < bseq.size; i++){
-        this->point.w(bseq_point.r());
-        this->point += 1;
-        bseq_point -= 1;
-    }
-}
-
-void BitStr::read_to(BitSeq &seq, int up_lim)
-{
-    if(seq.size > this->size) // В потоке меньше битов, чем поместится в seq
-        up_lim = size;
-
-    size -= up_lim;
-    seq.size = up_lim;
-
-    BitPtr pseq = seq.start;
-    for(int i = 0; i < up_lim; i++){
-        this->point -= 1;
-        pseq.w(point.r());
-        pseq +=1;
-    }
-}

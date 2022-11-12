@@ -24,27 +24,72 @@ public:
     BitPtr operator- (int shift);
     void   operator+=(int shift);
     void   operator-=(int shift);
+    void   operator++(int epm);
+    void   operator--(int emp);
 };
 
+
+// Класс-контейнер. BitSeq всегда начинается с первого бита в байте.
+/*
+ *      1) Всегда начинается с первого бита в байте
+ *      2) Автоматически выделяет нужное количество памяти
+ *      3) push_back(BitSeq) или append(BitSeq)
+ *      4) Конструкторы для заполнения
+ *      5) Оператор обращения к конкретному биту
+*/
 
 class BitSeq
 {
 public:
     BitSeq(){}
-    /*BitSeq(uint64_t data, int size)
-    {
-        this->start = new char[size/8 + 1]; //динамически выделяется, значит должна удаляться
-        this->size = size;
-        write(data);
-    }*/
 
-    BitSeq(BitPtr p_start, int p_size) : start(p_start), size(p_size){}
-    ~BitSeq(){} // Как чистить память?
+    BitSeq(int p_size) {
+        this->_size = p_size;
+        this->_allocated = p_size/8 + 1;
+        this->_start = new char[_allocated];
+        for(int i = 0; i < _allocated; i++)
+            _start[i] = 0;
+    }
+
+    BitSeq(uint64_t data, int p_size) : BitSeq(p_size) {
+        BitPtr point(_start, 0);
+        for(int i = 0; i < p_size; i++){
+            point.w(data & (1ul << i));
+        }
+    }
+
+    BitSeq(BitPtr p_ptrdata, int p_size) : BitSeq(p_size) {
+        BitPtr point(_start, 0);
+        for(int i = 0; i < p_size; i++){
+            point.w(p_ptrdata.r());
+            point++;
+            p_ptrdata++;
+        }
+    }
+
+    BitSeq(BitSeq &other) : BitSeq(other.begin(), other.size()) {}  //копирование памяти
+
+    ~BitSeq(){
+        if(_allocated > 0) delete[] _start;
+    }
+private:
+   cell _start;
+    int _size = 0;
+    int _allocated = 0;
 public:
-    BitPtr start;
-    int size;
+    int size()        { return _size; }
+    int allocated()   { return _allocated; }
+    BitPtr begin()    { return BitPtr(_start, 0); }
+    BitPtr end()      { return BitPtr(_start, 0) + _size - 1; }
+
+    void alloc_more(int bytes);  //выделяет дополнительную память
+    void alloc_less(int bytes);  //уменьшает количество выделенной памяти // Целесообразность?
+
+    void append(BitSeq &other);
+    BitSeq sub_BitSeq(int pos, int len);
 public:
-    void fill(uint64_t bits);
+    BitPtr operator [] (int pos);
+
 };
 
 std::ostream & operator << (std::ostream & stream, BitSeq seq);
@@ -53,21 +98,13 @@ std::ostream & operator << (std::ostream & stream, BitSeq seq);
 class BitStr
 {
 public:
-    BitStr(){
-        alloc_size = 1024;
-        field.start = new char[alloc_size];
-        point = field.start;
-    }
+    BitStr(){}
     ~BitStr(){
-        delete[] field.start.byte;
+        delete &field; // --- почему по адресу?
     }
 public:
     BitSeq field;
     BitPtr point;
-    int size;
-private:
-    int alloc_size;
-    void expand_field();
 public:
     void write(BitSeq bseq);
     void read_to(BitSeq & seq, int up_lim);
