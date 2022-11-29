@@ -3,15 +3,13 @@
 #include <iostream>
 #include <string>
 
-typedef char* cell;
-
 class BitPtr
 {
 public:
     BitPtr(){}
-    BitPtr(cell p_byte, uint8_t p_bit = 0) : byte(p_byte), bit(p_bit){}
+    BitPtr(char * p_byte, uint8_t p_bit = 0) : byte(p_byte), bit(p_bit){}
 public:
-    cell byte;
+    char* byte;
     uint8_t bit;
 public:
     int r(); // Read
@@ -101,18 +99,17 @@ class BitStr
 {
 public:
     BitStr(){
-        _field = BitSeq(4);
-        _point = _field.begin();
+        _field.alloc_more(1);
         _point_pos = 0;
     }
 private:
     BitSeq _field;
-    BitPtr _point;
     int    _point_pos;
 public:
     void   write(BitSeq & bseq);
     BitSeq read(int up_lim);
     BitSeq read_all();
+    void   check_container();
 };
 
 
@@ -123,14 +120,7 @@ public:
     Seq(BitSeq bseq) {parse(bseq);}
 public:
     char * str_name[64]; // Имя
-    BitSeq CONST_BITS;
-    std::string CONST_STRING;
-
-    BitSeq DATA_TYPE;
-
-    BitSeq DATA;
-    BitSeq DATA_ARRAY;
-    int array_size = -1;
+    BitSeq data;
 
 public:
     void parse(BitSeq bseq);

@@ -4,27 +4,33 @@
 
 using namespace std;
 
+void run(BitSeq sequence)
+{
+    BitStr str;
+    str.write(sequence);
+
+}
+
+
 int main()
 {
     char a;
     BitSeq::init();
     BitPtr p(&a, 0);
-    BitSeq seq(0b111111111111111, 16);
-    cout << seq;
-//    BitSeq seq2(seq);
-//    cout << seq2;
-//    BitSeq seq3 = seq;
+    BitSeq seq(0b1111010001001111, 16);
+    BitSeq seq2(seq);
 
-//    BitStr str;// = new BitStr();
-//    str.write(seq);
-//    BitSeq seq2 = str.read(10);
-    //str.read(10);
+    BitStr str;
+    str.write(seq);
+    str.check_container();
+    cout << (seq2 = str.read(16));
+    str.check_container();
 
-//    seq[0].w(1);
+    str.write(seq);
+    str.check_container();
+    str.write(seq);
+    str.check_container();
 
-//    cout << bs1;
-//    cout << bs2;
-//    cout << bs3;
-//    cout << bs4;
+
     return 0;
 }
