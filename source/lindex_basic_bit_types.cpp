@@ -1,5 +1,6 @@
-#include "t_bit_types.h"
+#include "lindex_basic_bit_types.h"
 #include <cassert>
+#include <cstring>
 
 using namespace std;
 
@@ -41,15 +42,15 @@ void BitPtr::operator--()          { *this -= 1; }
 //====================================================================================================
 //BitSeq:
 
-int BitSeq::empty;
-int BitSeq::by_size;
-int BitSeq::by_data_size;
-int BitSeq::by_ptr_size;
-int BitSeq::by_const_other;
-int BitSeq::by_other;
-int BitSeq::deletions;
+//int BitSeq::empty;
+//int BitSeq::by_size;
+//int BitSeq::by_data_size;
+//int BitSeq::by_ptr_size;
+//int BitSeq::by_const_other;
+//int BitSeq::by_other;
+//int BitSeq::deletions;
 
-BitSeq::BitSeq(){empty++;}
+BitSeq::BitSeq(){/*empty++;*/}
 
 BitSeq::BitSeq(int p_size) {
     this->_size = p_size;
@@ -57,12 +58,12 @@ BitSeq::BitSeq(int p_size) {
     this->_start = new char[_allocated];
     for(int i = 0; i < _allocated; i++)
         _start[i] = 0;
-    by_size++;
+//    by_size++;
 }
 
 BitSeq::BitSeq(uint64_t p_data, int p_size) : BitSeq(p_size) {
     BitPtr point(_start, 0);
-    for(int i = 0; i < _allocated; i++){
+    for(int i = _allocated-1; i >= 0; i--){
         this->_start[i] = (p_data >> (i * 8)) & 0xFF;
     }
 
@@ -70,7 +71,7 @@ BitSeq::BitSeq(uint64_t p_data, int p_size) : BitSeq(p_size) {
 //        point.w(p_data & (1ul << i));
 //        point++;
 //    }
-    by_data_size++;
+//    by_data_size++;
 }
 
 BitSeq::BitSeq(BitPtr p_ptrdata, int p_size) : BitSeq(p_size) {
@@ -80,35 +81,37 @@ BitSeq::BitSeq(BitPtr p_ptrdata, int p_size) : BitSeq(p_size) {
         point++;
         p_ptrdata++;
     }
-    by_ptr_size++;
+//    by_ptr_size++;
 }
 
 BitSeq::BitSeq(const BitSeq &other){ // : BitSeq(other.begin(), other.size()){
     this->copy(other);
-    by_const_other++;
+//    by_const_other++;
 }
 
 BitSeq::BitSeq(BitSeq &other){// : BitSeq(other.begin(), other.size()) {
     this->copy(other);
-    by_other++;
+//    by_other++;
 }
 
 BitSeq::~BitSeq(){
     if(_allocated > 0) delete[] _start;
-    deletions ++;
+//    deletions ++;
 }
 
 void BitSeq::copy(const BitSeq &other)
 {
     if(_allocated > 0) delete[] _start;
-    this->_size = other.size();
+    this->_size = other.bit_size();
     this->_allocated = (_size-1)/8 + 1;
     this->_start = new char[_allocated];
     for(int i = 0; i < _allocated; i++)
         _start[i] = other._start[i];
 }
 
-int BitSeq::size()      const { return _size; }
+int BitSeq::bit_size()  const { return _size; }
+
+int BitSeq::byte_size() const { return (_size-1)/8 + 1; }
 
 int BitSeq::allocated() const { return _allocated; }
 
@@ -143,18 +146,18 @@ void BitSeq::alloc_less(int bytes)
 
 void BitSeq::append(BitSeq const &other)
 {
-    if(other.size() + this->_size > _allocated * 8)
+    if(other.bit_size() + this->_size > _allocated * 8)
         this->alloc_more(other.allocated());
 
     BitPtr ptr_other = other.begin();
     BitPtr ptr_this  = this->end() + 1;
 
-    for(int i = 0; i < other.size(); i++){
+    for(int i = 0; i < other.bit_size(); i++){
         ptr_this.w(ptr_other.r());
         ptr_this++;
         ptr_other++;
     }
-    this->_size += other.size();
+    this->_size += other.bit_size();
 }
 
 BitSeq BitSeq::cut_from_end(int size)
@@ -188,6 +191,63 @@ BitSeq& BitSeq::operator =(const BitSeq &other)
     return *this;
 }
 
+bool BitSeq::operator==(const BitSeq &other) const
+{
+    if(this->bit_size() != other.bit_size())
+        return false;
+
+    return memcmp(this->begin().byte, other.begin().byte, this->byte_size()) == 0;
+}
+
+bool BitSeq::operator!=(const BitSeq &other) const
+{
+    return !(this->operator==(other));
+}
+
+bool BitSeq::operator>(const BitSeq &other) const
+{
+    if(this->bit_size() == other.bit_size()){
+        BitPtr tp = this->begin();
+        BitPtr op = other.begin();
+        for(int i = 0; i < this->bit_size(); i++){
+            if(tp.r() == op.r()){
+                tp++; op++;
+            }
+            else
+                return tp.r() > op.r();
+        }
+    }
+    return this->bit_size() > other.bit_size();
+
+}
+
+bool BitSeq::operator<(const BitSeq &other) const
+{
+    return other > *this;
+}
+
+bool BitSeq::operator>=(const BitSeq &other) const
+{
+    return *this > other || *this == other;
+}
+
+bool BitSeq::operator<=(const BitSeq &other) const
+{
+    return other > *this || *this == other;
+}
+
+BitSeq BitSeq::operator+ (const BitSeq & other) const{
+    BitSeq out(*this);
+    out.append(other);
+    return out;
+}
+
+BitSeq& BitSeq::operator+= (const BitSeq &other){
+    *this = *this+other;
+    return *this;
+}
+
+
 //void BitSeq::operator =(const BitSeq &other)
 //{
 //    if(_allocated > 0) delete[] _start;
@@ -207,14 +267,14 @@ BitSeq& BitSeq::operator =(const BitSeq &other)
 
 //}
 
-std::ostream & operator << (std::ostream & stream, BitSeq &seq){
+std::ostream & operator << (std::ostream & stream, BitSeq seq){
     printf("address: %i, ", seq.begin().byte);
-    stream << "size: " << seq.size() << " bits, alloc_size: " << seq.allocated() << " bytes";
+    stream << "size: " << seq.bit_size() << " bits, alloc_size: " << seq.allocated() << " bytes";
     stream << ", data: ";
-    BitPtr point = seq.end();
-    for(int i = 0; i < seq.size(); i++){
+    BitPtr point = seq.begin();
+    for(int i = 0; i < seq.bit_size(); i++){
         stream << point.r();
-        point -= 1;
+        point += 1;
     }
     return stream << endl;
 }
@@ -225,40 +285,76 @@ std::ostream & operator << (std::ostream & stream, BitSeq &seq){
 //====================================================================================================
 //BitStr:
 
-void BitStr::write(BitSeq & bseq)
+void BitStr::reset()
 {
-    if(_field.allocated() * 8 < _point_pos + bseq.size())
-        _field.alloc_more(bseq.allocated());
-    BitPtr point = _field.begin() + _point_pos;
+    this->_field = BitSeq(8);
+    this->_point_pos = 0;
+}
 
-    for(int i = 0; i < bseq.size(); i++){
-        point.w(bseq[i].r());
-        point++;
-    }
-    _point_pos += bseq.size();
+void BitStr::write(const BitSeq & bseq)
+{
+    this->_field.append(bseq);
+    this->_point_pos += bseq.bit_size();
+}
+
+void BitStr::write(BitSeq &bseq)
+{
+    this->_field.append(bseq);
+    this->_point_pos += bseq.bit_size();
+}
+
+BitSeq BitStr::check(int up_lim)
+{
+    up_lim = up_lim > _point_pos ? _point_pos : up_lim;
+    BitPtr point = _field.begin() + (len() - _point_pos);
+    return BitSeq(point, up_lim);
+}
+
+void BitStr::skip(int up_lim)
+{
+    up_lim = up_lim > _point_pos ? _point_pos : up_lim;
+    _point_pos -= up_lim;
 }
 
 BitSeq BitStr::read(int up_lim)
 {
     up_lim = up_lim > _point_pos ? _point_pos : up_lim;
-    BitPtr point = _field.begin() + (_point_pos - up_lim);
+    BitPtr point = _field.begin() + (len() - _point_pos);
     _point_pos -= up_lim;
-    return BitSeq(point, up_lim);
+    BitSeq out(point, up_lim);
+
+    if(_point_pos == 0)
+        this->reset();
+    return out;
 }
 
 BitSeq BitStr::read_all()
 {
-    return _field;
+    BitSeq out = _field;
+    this->reset();
+    return out;
 }
 
 void BitStr::check_container()
 {
-    cout << "container : ";
     BitPtr point = _field.begin();
+
+    cout << "container : ";
     for(int i = 0; i < _field.allocated() * 8; i++)
         cout << (point + i).r();
     cout << endl;
 
-    string pointer_line = "pointer   : " + (_point_pos > 0 ? string(_point_pos-1, ' ') : "") + "^";
+    string pointer_line = "pointer   : " + (_point_pos > 0 ? string(len() - _point_pos, ' ') + "^" : "-");
     cout << pointer_line << endl;
+}
+
+BitStr::operator bool() const
+{
+    return !(this->eof());
+}
+
+
+BitStr & operator << (BitStr & stream, BitSeq & bseq){
+    stream.write(bseq);
+    return stream;
 }

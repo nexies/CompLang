@@ -1,7 +1,9 @@
-#ifndef T_BIT_TYPES_H
-#define T_BIT_TYPES_H
+#ifndef LINDEX_BASIC_BIT_TYPES_H
+#define LINDEX_BASIC_BIT_TYPES_H
 #include <iostream>
 #include <string>
+
+class BitSeq;
 
 class BitPtr
 {
@@ -39,43 +41,43 @@ class BitSeq
 {
 public:
     BitSeq();
-    static int empty;
+//    static int empty;
 
     explicit BitSeq(int p_size);
-    static int by_size;
+//    static int by_size;
 
     BitSeq(uint64_t p_data, int p_size);
-    static int by_data_size;
+//    static int by_data_size;
 
     BitSeq(BitPtr p_ptrdata, int p_size);
-    static int by_ptr_size;
+//    static int by_ptr_size;
 
     BitSeq(const BitSeq &other);
-    static int by_const_other;
+//    static int by_const_other;
 
     BitSeq(BitSeq &other);
-    static int by_other;
+//    static int by_other;
 
     ~BitSeq();
-    static int deletions;
+//    static int deletions;
 
-    static void init(){
-        empty = 0;
+//    static void init(){
+/*        empty = 0;
         by_size = 0;
         by_data_size = 0;
         by_ptr_size = 0;
         by_const_other = 0;
         by_other = 0;
         deletions = 0;
-    }
+    }*/
 private:
     char* _start = 0;
     int _size = 0;
     int _allocated = 0;
 public:
-
     void copy(const BitSeq & other);
-    int size() const;
+    int bit_size() const;
+    int byte_size() const;
     int allocated() const;
     BitPtr begin() const;
     BitPtr end() const;
@@ -89,11 +91,19 @@ public:
 public:
     BitPtr  operator [] (int pos);
     BitSeq& operator = (const BitSeq & other);
+    bool    operator== (const BitSeq & other) const;
+    bool    operator!= (const BitSeq & other) const;
+    bool    operator>  (const BitSeq & other) const;
+    bool    operator<  (const BitSeq & other) const;
+    bool    operator>= (const BitSeq & other) const;
+    bool    operator<=  (const BitSeq & other) const;
+    BitSeq  operator+  (const BitSeq & other) const;
+    BitSeq& operator+= (const BitSeq & other);
 //    void   operator =  (BitSeq const & other);
 
 };
 
-std::ostream & operator << (std::ostream & stream, BitSeq &seq);
+std::ostream & operator << (std::ostream & stream, BitSeq seq);
 
 class BitStr
 {
@@ -105,25 +115,24 @@ public:
 private:
     BitSeq _field;
     int    _point_pos;
+private:
+inline int len() { return this->_field.bit_size(); }
 public:
+    void   reset();
+    bool   eof() const { return _point_pos == 0; }
+    void   write(const BitSeq & bseq);
     void   write(BitSeq & bseq);
+
+    BitSeq check(int up_lim);
+    void   skip(int up_lim);
     BitSeq read(int up_lim);
     BitSeq read_all();
+
     void   check_container();
+    operator bool() const;
 };
 
+BitStr & operator << (BitStr & stream, BitSeq & bseq);
 
-class Seq  //????
-{
-public:
-    Seq(){}
-    Seq(BitSeq bseq) {parse(bseq);}
-public:
-    char * str_name[64]; // Имя
-    BitSeq data;
 
-public:
-    void parse(BitSeq bseq);
-};
-
-#endif // T_BIT_TYPES_H
+#endif // LINDEX_BASIC_BIT_TYPES_H

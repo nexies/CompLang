@@ -10,10 +10,12 @@ MOC_DIR = ../moc/CompLang
 TARGET = CompLang
 
 SOURCES += \
-        source/main.cpp \
-        source/t_bit_types.cpp \
-    source/t_data_types.cpp
+        source/lindex_basic_bit_types.cpp \
+        source/lindex_basic_data_types.cpp \
+        source/lindex_construct_data_types.cpp \
+        source/main.cpp
 
 HEADERS += \
-    source/t_bit_types.h \
-    source/t_data_types.h
+    source/lindex_basic_bit_types.h \
+    source/lindex_basic_data_types.h \
+    source/lindex_construct_data_types.h
