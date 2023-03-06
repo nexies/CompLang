@@ -64,14 +64,8 @@ BitSeq::BitSeq(int p_size) {
 BitSeq::BitSeq(uint64_t p_data, int p_size) : BitSeq(p_size) {
     BitPtr point(_start, 0);
     for(int i = _allocated-1; i >= 0; i--){
-        this->_start[i] = (p_data >> (i * 8)) & 0xFF;
+        this->_start[_allocated - i - 1] = (p_data >> (i * 8)) & 0xFF;
     }
-
-//    for(int i = 0; i < p_size; i++){
-//        point.w(p_data & (1ul << i));
-//        point++;
-//    }
-//    by_data_size++;
 }
 
 BitSeq::BitSeq(BitPtr p_ptrdata, int p_size) : BitSeq(p_size) {
