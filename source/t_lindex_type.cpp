@@ -1,4 +1,4 @@
-#include "lindex_basic_data_types.h"
+#include "t_lindex_type.h"
 
 lindex_None_t making_None_type;
 
@@ -35,13 +35,16 @@ BitStr &operator>>(BitStr &stream, _lindex_uint2_type &uint2)
 }
 */
 
-bool new_type(uint32_t type_id, std::string name, bool parse(BitStr &, BitSeq &), BitSeq action(BitSeq &, BitSeq &))
+bool lindex_uint2_parse(BitStr &stream, BitSeq &data_ptr)
 {
-    if (type_vtable.contains(type_id)) return false;
-    _lindex_basic_type * ptr = new _lindex_basic_type;
-    ptr->_type_id = type_id;
-    ptr->name = name;
-    ptr->parse = parse;
-    ptr->action = action;
-    type_vtable.add(type_id, ptr);
+    if(stream.check(32) == BitSeq(LINDEX_UINT2, 32)){
+        data_ptr = stream.read(2);
+        return true;
+    }
+    return false;
+}
+
+BitSeq lindex_uint2_action(BitSeq &seq, BitSeq &data_ptr)
+{
+    return BitSeq(LINDEX_UINT2, 32) + data_ptr;
 }

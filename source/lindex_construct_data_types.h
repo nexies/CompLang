@@ -1,7 +1,7 @@
 #ifndef LINDEX_CONSTRUCT_DATA_TYPES_H
 #define LINDEX_CONSTRUCT_DATA_TYPES_H
 
-#include "lindex_basic_data_types.h"
+#include "t_lindex_type.h"
 
 //class Seq: public _lindex_basic_type
 //{

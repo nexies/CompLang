@@ -6,7 +6,7 @@
 #include "lindex_basic_bit_types.h"
 #include "lindex_construct_data_types.h"
 
-#include "lindex_basic_data_types.h"
+#include "t_lindex_type.h"
 
 #include <map>
 

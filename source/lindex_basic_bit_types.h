@@ -37,39 +37,18 @@ public:
  *      5) Оператор обращения к конкретному биту
 */
 
+
+// нужно добавить перевод в uint32_t
 class BitSeq
 {
 public:
     BitSeq();
-//    static int empty;
-
     explicit BitSeq(int p_size);
-//    static int by_size;
-
     BitSeq(uint64_t p_data, int p_size);
-//    static int by_data_size;
-
     BitSeq(BitPtr p_ptrdata, int p_size);
-//    static int by_ptr_size;
-
     BitSeq(const BitSeq &other);
-//    static int by_const_other;
-
     BitSeq(BitSeq &other);
-//    static int by_other;
-
     ~BitSeq();
-//    static int deletions;
-
-//    static void init(){
-/*        empty = 0;
-        by_size = 0;
-        by_data_size = 0;
-        by_ptr_size = 0;
-        by_const_other = 0;
-        by_other = 0;
-        deletions = 0;
-    }*/
 private:
     char* _start = 0;
     int _size = 0;
